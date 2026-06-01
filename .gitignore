@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# 환경변수 (.env.example만 커밋)
+.env
+.env.local
+*.env.local
+
+# 빌드 산출물
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# 업로드된 이미지 (로컬 테스트용)
+backend/uploads/

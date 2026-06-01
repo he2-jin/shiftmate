@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: ./backend
+    image: shiftmate-api:dev
+    container_name: shiftmate-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - uploads:/data/uploads
+    env_file:
+      - path: ./backend/.env
+        required: false
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    container_name: shiftmate-db
+    environment:
+      POSTGRES_DB: shiftmate
+      POSTGRES_USER: shiftmate
+      POSTGRES_PASSWORD: shiftmate
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
+  uploads:
