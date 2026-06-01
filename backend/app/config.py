@@ -12,5 +12,7 @@ class Settings(BaseSettings):
     app_name: str = "shiftmate"
     log_level: str = "INFO"
 
+    database_url: str = "postgresql+psycopg://shiftmate:shiftmate@db:5432/shiftmate"
+
 
 settings = Settings()
