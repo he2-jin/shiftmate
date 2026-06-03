@@ -14,5 +14,9 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://shiftmate:shiftmate@db:5432/shiftmate"
 
+    upload_dir: str = "/data/uploads"
+    max_upload_mb: int = 10
+    parser_backend: str = "mock"
+
 
 settings = Settings()
