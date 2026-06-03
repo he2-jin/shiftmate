@@ -32,3 +32,6 @@ backend/uploads/
 
 # 작업 계획/회고 문서 — 로컬에만 보관, git에 커밋하지 않음
 plans/
+
+# Claude Code / IDE 로컬 설정
+.claude/
