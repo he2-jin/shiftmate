@@ -11,7 +11,7 @@ from app.db.models.schedule_month import ScheduleMonth
 from app.db.models.schedule_person import SchedulePerson
 from app.db.models.schedule_version import STATUS_DRAFT, ScheduleVersion
 from app.parsers.base import ScheduleParser
-from app.schemas.schedule import CellOut, PersonOut, ScheduleMonthOut, UploadResponse
+from app.schemas.schedule import CONFIDENCE_REVIEW_THRESHOLD, CellOut, PersonOut, ScheduleMonthOut, UploadResponse
 
 
 def upload_and_parse(
@@ -110,6 +110,8 @@ def upload_and_parse(
     db.refresh(schedule_month)
     for p in persons:
         db.refresh(p)
+    for c in cells:
+        db.refresh(c)
 
     return UploadResponse(
         version_id=version.id,
@@ -121,13 +123,18 @@ def upload_and_parse(
         persons=[PersonOut.model_validate(p) for p in persons],
         cells=[
             CellOut(
-                person_id=person_by_row[c.person_row_index].id,
+                cell_id=c.id,
+                person_id=c.schedule_person_id,
                 date=c.date,
                 shift_code=c.shift_code,
                 confidence_score=c.confidence_score,
+                is_user_corrected=c.is_user_corrected,
+                needs_review=(
+                    c.confidence_score is not None
+                    and c.confidence_score < CONFIDENCE_REVIEW_THRESHOLD
+                ),
             )
-            for c in parse_result.cells
-            if c.person_row_index in person_by_row
+            for c in cells
         ],
     )
 

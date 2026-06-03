@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.deps import get_db
 from app.parsers import get_parser
-from app.schemas.schedule import UploadResponse
+from app.schemas.schedule import (
+    CellPatchRequest,
+    CellPatchResponse,
+    ReviewResponse,
+    UploadResponse,
+    VersionDetailResponse,
+)
+from app.services.review_service import complete_review, get_version_detail, patch_cell
 from app.services.upload_service import cancel_version, upload_and_parse
 
 router = APIRouter()
@@ -19,7 +26,6 @@ def upload_schedule(
     db: Session = Depends(get_db),
 ):
     if table_type not in ("nursing_assistant", "support_staff"):
-        from fastapi import HTTPException
         raise HTTPException(status_code=422, detail="table_type은 nursing_assistant 또는 support_staff여야 합니다.")
 
     parser = get_parser(settings.parser_backend)
@@ -40,3 +46,28 @@ def delete_version(
     db: Session = Depends(get_db),
 ):
     cancel_version(db=db, version_id=version_id)
+
+
+@router.get("/schedules/versions/{version_id}", response_model=VersionDetailResponse)
+def get_version(
+    version_id: int,
+    db: Session = Depends(get_db),
+):
+    return get_version_detail(db=db, version_id=version_id)
+
+
+@router.patch("/schedules/cells/{cell_id}", response_model=CellPatchResponse)
+def update_cell(
+    cell_id: int,
+    body: CellPatchRequest,
+    db: Session = Depends(get_db),
+):
+    return patch_cell(db=db, cell_id=cell_id, shift_code=body.shift_code)
+
+
+@router.post("/schedules/versions/{version_id}/review", response_model=ReviewResponse)
+def review_version(
+    version_id: int,
+    db: Session = Depends(get_db),
+):
+    return complete_review(db=db, version_id=version_id)
