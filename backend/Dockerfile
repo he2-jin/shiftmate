@@ -5,11 +5,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# 의존성 명세만 먼저 복사 → Docker 레이어 캐시 활용
-COPY pyproject.toml /app/
+# 고정된 의존성 명세만 먼저 복사 → Docker 레이어 캐시 활용
+# requirements.txt가 버전 고정의 원본(source of truth). 업데이트는 uv pip compile 등으로 재생성.
+COPY requirements.txt /app/
 
 # 컨테이너 내부에서는 venv 격리가 불필요하므로 시스템 Python에 직접 설치
-RUN uv pip install --system --no-cache -r pyproject.toml
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # 소스 복사 (개발 시에는 compose의 bind mount가 이 위를 덮어씀)
 COPY . /app
