@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from app.schemas.parser import ParseResult
+from app.parsers.types import ParseResult
 
 
 class ScheduleParser(ABC):

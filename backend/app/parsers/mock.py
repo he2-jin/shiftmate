@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image
 
 from app.parsers.base import ScheduleParser
-from app.schemas.parser import ParsedCell, ParsedPerson, ParseResult
+from app.parsers.types import ParsedCell, ParsedPerson, ParseResult
 
 # 고정 샘플 데이터 (테스트 재현성을 위해 랜덤 없음)
 _MOCK_NAMES = ["김간호", "이지원", "박조무"]
