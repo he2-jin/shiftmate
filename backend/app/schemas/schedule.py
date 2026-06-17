@@ -118,3 +118,38 @@ class ApplyResponse(BaseModel):
 class IgnoreResponse(BaseModel):
     version_id: Annotated[int, Field(description="버린(ignored) 근무표 버전 ID")]
     status: Annotated[str, Field(description="처리 후 상태 (ignored)")]
+
+
+class MonthScheduleResponse(BaseModel):
+    schedule_month: Annotated[ScheduleMonthOut, Field(description="대상 근무표 월 정보")]
+    active_version_id: Annotated[int, Field(description="이 달의 확정본 버전 ID")]
+    table_type: Annotated[
+        str,
+        Field(description="근무표 유형 (nursing_assistant=간호조무사 / support_staff=지원인력)"),
+    ]
+    persons: Annotated[list[PersonOut], Field(description="근무자 목록")]
+    cells: Annotated[list[CellOut], Field(description="확정본 근무 셀 목록")]
+
+
+class PersonScheduleResponse(BaseModel):
+    person: Annotated[PersonOut, Field(description="대상 근무자 정보")]
+    year: Annotated[int, Field(description="근무표 연도")]
+    month: Annotated[int, Field(description="근무표 월 (1~12)")]
+    cells: Annotated[list[CellOut], Field(description="이 근무자의 확정본 근무 셀 목록")]
+
+
+class DiffCell(BaseModel):
+    person_name: Annotated[str, Field(description="근무자 이름 (비교 기준 키)")]
+    date: Annotated[dt.date, Field(description="근무 날짜")]
+    from_shift: Annotated[str, Field(description="확정본의 근무 코드 (변경 전)")]
+    to_shift: Annotated[str, Field(description="대상 버전의 근무 코드 (변경 후)")]
+
+
+class DiffResponse(BaseModel):
+    version_id: Annotated[int, Field(description="비교 대상(작업본) 버전 ID")]
+    compared_to_version_id: Annotated[
+        int | None, Field(description="비교한 확정본 버전 ID (확정본 없으면 null)")
+    ]
+    changes: Annotated[
+        list[DiffCell], Field(description="확정본과 근무 코드가 다른 칸 목록")
+    ]

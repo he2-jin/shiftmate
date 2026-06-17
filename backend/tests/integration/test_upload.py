@@ -1,6 +1,5 @@
 import io
 
-import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -61,18 +60,48 @@ def test_upload_status_is_draft(client: TestClient):
     assert response.json()["status"] == "draft"
 
 
-def test_upload_same_month_twice_increments_version(client: TestClient):
-    kwargs = dict(
-        data={"year": "2026", "month": "7", "table_type": "nursing_assistant"},
+def _upload(client: TestClient, month: int) -> dict:
+    r = client.post(
+        "/api/schedules/upload",
+        data={"year": "2026", "month": str(month), "table_type": "nursing_assistant"},
         files={"image": ("test.png", _make_png_bytes(), "image/png")},
     )
-    r1 = client.post("/api/schedules/upload", **kwargs)
-    r2 = client.post("/api/schedules/upload", **kwargs)
-    assert r1.status_code == 201
-    assert r2.status_code == 201
-    # 같은 month row를 공유하지만 version은 별개
-    assert r1.json()["version_id"] != r2.json()["version_id"]
-    assert r1.json()["schedule_month"]["id"] == r2.json()["schedule_month"]["id"]
+    assert r.status_code == 201
+    return r.json()
+
+
+def test_reupload_same_month_replaces_previous_draft(client: TestClient):
+    """같은 달에 다시 올리면 이전 작업본(draft)은 사라지고 새 것만 남는다."""
+    v1 = _upload(client, month=7)["version_id"]
+    v2 = _upload(client, month=7)["version_id"]
+    assert v1 != v2
+    # 이전 draft는 삭제됨
+    assert client.get(f"/api/schedules/versions/{v1}").status_code == 404
+    # 새 draft만 남음
+    assert client.get(f"/api/schedules/versions/{v2}").status_code == 200
+
+
+def test_reupload_keeps_applied_version(client: TestClient):
+    """확정본(applied)이 있는 달에 새로 올려도 확정본은 보호된다."""
+    v1 = _upload(client, month=3)["version_id"]
+    client.post(f"/api/schedules/versions/{v1}/review")
+    client.post(f"/api/schedules/versions/{v1}/apply")
+
+    _upload(client, month=3)  # 같은 달 새 업로드
+
+    detail = client.get(f"/api/schedules/versions/{v1}")
+    assert detail.status_code == 200
+    assert detail.json()["status"] == "applied"
+
+
+def test_reupload_removes_reviewed_version(client: TestClient):
+    """확정 안 한 reviewed 버전도 새로 올리면 정리된다."""
+    v1 = _upload(client, month=4)["version_id"]
+    client.post(f"/api/schedules/versions/{v1}/review")  # reviewed (확정 안 함)
+
+    _upload(client, month=4)  # 같은 달 새 업로드
+
+    assert client.get(f"/api/schedules/versions/{v1}").status_code == 404
 
 
 def test_delete_version_returns_204(client: TestClient):

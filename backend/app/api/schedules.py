@@ -8,12 +8,17 @@ from app.schemas.schedule import (
     ApplyResponse,
     CellPatchRequest,
     CellPatchResponse,
+    DiffResponse,
     IgnoreResponse,
+    MonthScheduleResponse,
+    PersonScheduleResponse,
     ReviewResponse,
     UploadResponse,
     VersionDetailResponse,
 )
 from app.services.apply_service import apply_version, ignore_version
+from app.services.diff_service import diff_against_active
+from app.services.query_service import get_month_schedule, get_person_schedule
 from app.services.review_service import complete_review, get_version_detail, patch_cell
 from app.services.upload_service import cancel_version, upload_and_parse
 
@@ -90,3 +95,33 @@ def ignore_schedule_version(
     db: Session = Depends(get_db),
 ):
     return ignore_version(db=db, version_id=version_id)
+
+
+@router.get("/schedules/versions/{version_id}/diff", response_model=DiffResponse)
+def diff_schedule_version(
+    version_id: int,
+    db: Session = Depends(get_db),
+):
+    return diff_against_active(db=db, version_id=version_id)
+
+
+@router.get("/schedules/months/{year}/{month}", response_model=MonthScheduleResponse)
+def get_month_schedule_view(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+):
+    return get_month_schedule(db=db, year=year, month=month)
+
+
+@router.get(
+    "/schedules/months/{year}/{month}/person/{person_id}",
+    response_model=PersonScheduleResponse,
+)
+def get_person_schedule_view(
+    year: int,
+    month: int,
+    person_id: int,
+    db: Session = Depends(get_db),
+):
+    return get_person_schedule(db=db, year=year, month=month, person_id=person_id)
