@@ -5,12 +5,15 @@ from app.config import settings
 from app.deps import get_db
 from app.parsers import get_parser
 from app.schemas.schedule import (
+    ApplyResponse,
     CellPatchRequest,
     CellPatchResponse,
+    IgnoreResponse,
     ReviewResponse,
     UploadResponse,
     VersionDetailResponse,
 )
+from app.services.apply_service import apply_version, ignore_version
 from app.services.review_service import complete_review, get_version_detail, patch_cell
 from app.services.upload_service import cancel_version, upload_and_parse
 
@@ -71,3 +74,19 @@ def review_version(
     db: Session = Depends(get_db),
 ):
     return complete_review(db=db, version_id=version_id)
+
+
+@router.post("/schedules/versions/{version_id}/apply", response_model=ApplyResponse)
+def apply_schedule_version(
+    version_id: int,
+    db: Session = Depends(get_db),
+):
+    return apply_version(db=db, version_id=version_id)
+
+
+@router.post("/schedules/versions/{version_id}/ignore", response_model=IgnoreResponse)
+def ignore_schedule_version(
+    version_id: int,
+    db: Session = Depends(get_db),
+):
+    return ignore_version(db=db, version_id=version_id)

@@ -101,3 +101,20 @@ class ReviewResponse(BaseModel):
     status: Annotated[str, Field(description="검토 후 상태 (reviewed)")]
     reviewed_at: Annotated[dt.datetime, Field(description="검토 완료 처리 시각")]
     image_deleted: Annotated[bool, Field(description="원본 업로드 이미지 삭제 여부")]
+
+
+class ApplyResponse(BaseModel):
+    version_id: Annotated[int, Field(description="확정 처리된 근무표 버전 ID")]
+    status: Annotated[str, Field(description="처리 후 상태 (applied)")]
+    applied_at: Annotated[dt.datetime | None, Field(description="확정 처리 시각")]
+    active_version_id: Annotated[
+        int | None, Field(description="해당 월의 현재 확정본 버전 ID")
+    ]
+    previous_active_version_id: Annotated[
+        int | None, Field(description="교체되기 전 확정본 버전 ID (없으면 null)")
+    ]
+
+
+class IgnoreResponse(BaseModel):
+    version_id: Annotated[int, Field(description="버린(ignored) 근무표 버전 ID")]
+    status: Annotated[str, Field(description="처리 후 상태 (ignored)")]
