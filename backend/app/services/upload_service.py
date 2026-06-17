@@ -9,9 +9,19 @@ from app.config import Settings
 from app.db.models.schedule_cell import ScheduleCell
 from app.db.models.schedule_month import ScheduleMonth
 from app.db.models.schedule_person import SchedulePerson
-from app.db.models.schedule_version import STATUS_DRAFT, ScheduleVersion
+from app.db.models.schedule_version import (
+    STATUS_DRAFT,
+    STATUS_REVIEWED,
+    ScheduleVersion,
+)
 from app.parsers.base import ScheduleParser
-from app.schemas.schedule import CONFIDENCE_REVIEW_THRESHOLD, CellOut, PersonOut, ScheduleMonthOut, UploadResponse
+from app.schemas.schedule import (
+    CONFIDENCE_REVIEW_THRESHOLD,
+    CellOut,
+    PersonOut,
+    ScheduleMonthOut,
+    UploadResponse,
+)
 
 
 def upload_and_parse(
@@ -60,6 +70,25 @@ def upload_and_parse(
         schedule_month = ScheduleMonth(year=year, month=month)
         db.add(schedule_month)
         db.flush()  # id 확보
+
+    # 5-1. 같은 달의 '확정 안 한' 기존 버전(draft, reviewed) 정리
+    #      확정본(applied)·버림(ignored)은 보존. 한 달에 작업본은 하나만 유지.
+    stale_versions = (
+        db.query(ScheduleVersion)
+        .filter(
+            ScheduleVersion.schedule_month_id == schedule_month.id,
+            ScheduleVersion.status.in_([STATUS_DRAFT, STATUS_REVIEWED]),
+        )
+        .all()
+    )
+    for stale in stale_versions:
+        if stale.source_image_path:
+            stale_path = Path(stale.source_image_path)
+            if stale_path.exists():
+                stale_path.unlink()
+        db.delete(stale)  # person/cell은 FK ondelete CASCADE로 함께 삭제
+    if stale_versions:
+        db.flush()
 
     # 6. ScheduleVersion 생성 (항상 새로 만듦)
     version = ScheduleVersion(

@@ -1,5 +1,4 @@
 import io
-import datetime as dt
 
 import pytest
 from PIL import Image
