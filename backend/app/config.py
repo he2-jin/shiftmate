@@ -18,5 +18,9 @@ class Settings(BaseSettings):
     max_upload_mb: int = 10
     parser_backend: str = "mock"
 
+    # OCR (Phase 8)
+    ocr_engine: str = "tesseract"
+    ocr_store_image: bool = False  # 수정 기록에 원본 이미지 식별자를 남길지
+
 
 settings = Settings()

@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.db.models.ocr_correction import OcrCorrection
 from app.db.models.schedule_cell import ScheduleCell
 from app.db.models.schedule_month import ScheduleMonth
 from app.db.models.schedule_person import SchedulePerson
@@ -24,6 +25,7 @@ def clean_db():
         db.query(SchedulePerson).delete()
         db.query(ScheduleVersion).delete()
         db.query(ScheduleMonth).delete()
+        db.query(OcrCorrection).delete()
         db.commit()
     finally:
         db.close()

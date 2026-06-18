@@ -116,3 +116,7 @@ watchfiles==1.2.0
     # via uvicorn
 websockets==16.0
     # via uvicorn
+
+# Phase 8 OCR (수동 추가 — opencv가 numpy를 함께 끌어옴)
+opencv-python-headless>=4.10
+pytesseract>=0.3.13
