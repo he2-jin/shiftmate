@@ -106,8 +106,71 @@ def _row_to_person(
     return ExtractedPerson(name=name or "(이름 미상)", days=days)
 
 
+def _find_grid_header(grid: list[list[str]]) -> tuple[int, dict[int, int]]:
+    """격자에서 1~31 숫자가 가장 많이 들어선 행을 날짜 헤더로 본다.
+
+    반환: (헤더 행 인덱스, {열 인덱스: 며칠}). 못 찾으면 (-1, {}).
+    """
+    best_idx, best_cols = -1, {}
+    for i, row in enumerate(grid):
+        date_cols: dict[int, int] = {}
+        for c, cell in enumerate(row):
+            t = cell.strip()
+            if t.isdigit() and 1 <= int(t) <= 31:
+                date_cols[c] = int(t)
+        if len(date_cols) > len(best_cols):
+            best_idx, best_cols = i, date_cols
+    return best_idx, best_cols
+
+
+def parse_grid(grid: list[list[str]], raw_text: str = "") -> ExtractedSchedule:
+    """셀 분할 격자(행×열 텍스트)를 좌표 재계산 없이 바로 근무표로 매핑한다.
+
+    셀 분할은 이미 "어느 칸이 누구의 며칠"인지 격자를 알고 있으므로,
+    좌표 클러스터링(_cluster_rows) 없이 행=사람·열=날짜로 곧장 옮긴다.
+    """
+    year, month = _extract_year_month(raw_text)
+    header_idx, date_cols = _find_grid_header(grid)
+    if header_idx < 0 or not date_cols:
+        return ExtractedSchedule(
+            source_type="shift_schedule", year=year, month=month, people=[]
+        )
+
+    name_cols = list(range(min(date_cols)))  # 첫 날짜 열 이전 = 이름/직책 칸
+    sorted_dates = sorted(date_cols.items())  # [(열, 며칠), ...]
+
+    people: list[ExtractedPerson] = []
+    for row in grid[header_idx + 1 :]:
+        name = " ".join(
+            row[c].strip() for c in name_cols if c < len(row) and row[c].strip()
+        ).strip()
+
+        days: list[ExtractedDay] = []
+        for col, day in sorted_dates:
+            cell = row[col] if col < len(row) else None
+            days.append(ExtractedDay(day=day, code=normalize_shift_code(cell)))
+
+        has_code = any(d.code not in (None, "빈칸") for d in days)
+        if not name and not has_code:
+            continue
+        people.append(ExtractedPerson(name=name or "(이름 미상)", days=days))
+
+    return ExtractedSchedule(
+        source_type="shift_schedule", year=year, month=month, people=people
+    )
+
+
 def parse_schedule(ocr: OcrResult) -> ExtractedSchedule:
-    """OCR 결과를 근무표 구조로 맞춘다."""
+    """OCR 결과를 근무표 구조로 맞춘다.
+
+    셀 분할 격자(ocr.grid)가 있으면 그걸 바로 쓰고(정확),
+    없으면 글자 좌표를 클러스터링해 최선껏 복원한다.
+    """
+    if ocr.grid:
+        schedule = parse_grid(ocr.grid, ocr.raw_text)
+        schedule.ocr = ocr
+        return schedule
+
     year, month = _extract_year_month(ocr.raw_text)
     rows = _cluster_rows(ocr.words)
     header = _find_date_header(rows)

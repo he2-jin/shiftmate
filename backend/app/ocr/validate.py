@@ -51,7 +51,8 @@ def validate_schedule_extraction(schedule: ExtractedSchedule) -> list[str]:
         if summary is not None:
             if summary.off is not None and summary.off != counts["OFF"]:
                 warnings.append(
-                    f"{person.name}: OFF 합계가 맞지 않습니다 (합계 {summary.off}, 실제 {counts['OFF']})."
+                    f"{person.name}: OFF 합계가 맞지 않습니다 "
+                    f"(합계 {summary.off}, 실제 {counts['OFF']})."
                 )
             if summary.n is not None and summary.n != counts["N"]:
                 warnings.append(

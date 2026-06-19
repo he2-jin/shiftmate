@@ -40,9 +40,14 @@ def process_schedule_image(
     preprocessor = preprocessor or ImagePreprocessor()
 
     # 1. 사진 다듬기 (실패해도 원본으로 진행)
-    try:
-        ocr_input = preprocessor.preprocess(image_path)
-    except Exception:  # noqa: BLE001
+    #    셀 분할처럼 자체 전처리를 하는 엔진은 공통 전처리를 건너뛴다
+    #    (흑백·확대·샤픈이 오히려 격자 검출을 방해하기 때문).
+    if engine.needs_external_preprocess:
+        try:
+            ocr_input = preprocessor.preprocess(image_path)
+        except Exception:  # noqa: BLE001
+            ocr_input = image_path
+    else:
         ocr_input = image_path
 
     # 2. 글자 읽기

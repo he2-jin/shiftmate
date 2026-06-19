@@ -28,6 +28,10 @@ class OcrResult(BaseModel):
 
     raw_text: Annotated[str, Field(description="읽어낸 전체 원문")] = ""
     words: list[OcrWord] = Field(default_factory=list)
+    grid: Annotated[
+        list[list[str]] | None,
+        Field(description="셀 분할로 얻은 표 격자(행×열 텍스트). 있으면 바로 매핑"),
+    ] = None
     confidence: Annotated[float | None, Field(description="전체 평균 확실한 정도")] = None
     warnings: list[str] = Field(default_factory=list)
 

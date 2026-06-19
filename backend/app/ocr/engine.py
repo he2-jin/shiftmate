@@ -12,6 +12,10 @@ from app.ocr.schemas import BoundingBox, OcrResult, OcrWord
 class OcrEngine(ABC):
     """사진 → 글자 읽기 도구의 공통 틀."""
 
+    # 파이프라인의 공통 전처리(Pillow 흑백·확대·샤픈)를 적용할지.
+    # 셀 분할처럼 자체 전처리(OpenCV 이진화)를 하는 엔진은 False로 끈다.
+    needs_external_preprocess: bool = True
+
     @abstractmethod
     def recognize(self, image_path: Path) -> OcrResult:
         """이미지에서 글자·위치·확실한 정도를 읽어 OcrResult로 돌려준다."""
