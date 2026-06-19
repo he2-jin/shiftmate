@@ -13,6 +13,22 @@ from app.ocr.schemas import ExtractedSchedule
 from app.ocr.validate import validate_schedule_extraction
 
 
+def _build_engine() -> OcrEngine:
+    """설정(ocr_engine)에 따라 OCR 엔진을 고른다.
+
+    기본을 셀 분할(cell_split)로 둔 이유:
+    - 표를 셀 단위로 잘라 읽어 통짜 OCR보다 정확도가 높음
+    - 완전 로컬 처리 → 근무표 속 동료(제3자) 정보를 외부로 보내지 않음
+    """
+    from app.config import settings
+
+    if settings.ocr_engine == "cell_split":
+        from app.ocr.cell_split import CellSplitOcrEngine
+
+        return CellSplitOcrEngine()
+    return TesseractOcrEngine()
+
+
 def process_schedule_image(
     image_path: Path,
     engine: OcrEngine | None = None,
@@ -20,7 +36,7 @@ def process_schedule_image(
     shift_time_settings: dict[str, dict] | None = None,
 ) -> ExtractedSchedule:
     """근무표 이미지를 받아 구조화된 결과(경고·캘린더 미리보기 포함)를 돌려준다."""
-    engine = engine or TesseractOcrEngine()
+    engine = engine or _build_engine()
     preprocessor = preprocessor or ImagePreprocessor()
 
     # 1. 사진 다듬기 (실패해도 원본으로 진행)
