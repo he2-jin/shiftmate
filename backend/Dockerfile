@@ -5,6 +5,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
+# Phase 8: OCR 엔진(Tesseract) + 한글/영어 글자 데이터 설치
+# opencv-python-headless는 GUI 라이브러리가 불필요하므로 추가 시스템 패키지 없이 동작
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr \
+    tesseract-ocr-kor \
+    tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
+
 # 고정된 의존성 명세만 먼저 복사 → Docker 레이어 캐시 활용
 # requirements.txt가 버전 고정의 원본(source of truth). 업데이트는 uv pip compile 등으로 재생성.
 COPY requirements.txt /app/
