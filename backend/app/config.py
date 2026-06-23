@@ -22,5 +22,10 @@ class Settings(BaseSettings):
     ocr_engine: str = "cell_split"
     ocr_store_image: bool = False  # 수정 기록에 원본 이미지 식별자를 남길지
 
+    # Auth (Phase 9-A) — JWT 서명 키와 만료 시간
+    secret_key: str = "change-me-in-production"
+    access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 30
+
 
 settings = Settings()
