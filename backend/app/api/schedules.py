@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.deps import get_db
+from app.deps import get_current_user, get_db
 from app.parsers import get_parser
 from app.schemas.schedule import (
     ApplyResponse,
@@ -32,6 +32,7 @@ def upload_schedule(
     month: int = Form(..., ge=1, le=12, description="근무표 월"),
     table_type: str = Form(..., description="nursing_assistant 또는 support_staff"),
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     if table_type not in ("nursing_assistant", "support_staff"):
         raise HTTPException(status_code=422, detail="table_type은 nursing_assistant 또는 support_staff여야 합니다.")
@@ -52,6 +53,7 @@ def upload_schedule(
 def delete_version(
     version_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     cancel_version(db=db, version_id=version_id)
 
@@ -60,6 +62,7 @@ def delete_version(
 def get_version(
     version_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return get_version_detail(db=db, version_id=version_id)
 
@@ -69,6 +72,7 @@ def update_cell(
     cell_id: int,
     body: CellPatchRequest,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return patch_cell(db=db, cell_id=cell_id, shift_code=body.shift_code)
 
@@ -77,6 +81,7 @@ def update_cell(
 def review_version(
     version_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return complete_review(db=db, version_id=version_id)
 
@@ -85,6 +90,7 @@ def review_version(
 def apply_schedule_version(
     version_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return apply_version(db=db, version_id=version_id)
 
@@ -93,6 +99,7 @@ def apply_schedule_version(
 def ignore_schedule_version(
     version_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return ignore_version(db=db, version_id=version_id)
 
@@ -101,6 +108,7 @@ def ignore_schedule_version(
 def diff_schedule_version(
     version_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return diff_against_active(db=db, version_id=version_id)
 
@@ -110,6 +118,7 @@ def get_month_schedule_view(
     year: int,
     month: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return get_month_schedule(db=db, year=year, month=month)
 
@@ -123,5 +132,6 @@ def get_person_schedule_view(
     month: int,
     person_id: int,
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),  # 인증 필수
 ):
     return get_person_schedule(db=db, year=year, month=month, person_id=person_id)
